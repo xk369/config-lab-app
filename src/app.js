@@ -5,19 +5,22 @@ const TaskService = require('./services/taskService');
 const createApiRouter = require('./routes/apiRoutes');
 const createPageRouter = require('./routes/pageRoutes');
 
-function createApp() {
+async function createApp() {
   const app = express();
-  const taskRepository = new TaskRepository(config.dataFile);
+  const taskRepository = await TaskRepository.create(config);
   const taskService = new TaskService(taskRepository);
   const dependencies = { config, taskService };
 
+  app.use(express.json());
   app.use(express.static('public'));
   app.use('/api', createApiRouter(dependencies));
   app.use('/', createPageRouter(dependencies));
 
   app.use((error, request, response, next) => {
     console.error(error);
-    response.status(500).json({
+    const statusCode = error.message === 'Task title is required.' ? 400 : 500;
+
+    response.status(statusCode).json({
       message: 'Application error',
       details: error.message,
     });

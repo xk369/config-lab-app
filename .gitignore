@@ -6,3 +6,4 @@ config/local.yaml
 coverage/
 reports/screenshots/
 data/tasks.runtime.json
+data/tasks.sqlite

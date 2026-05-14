@@ -10,6 +10,14 @@ function createDefaults(cwd) {
     host: '0.0.0.0',
     port: 3001,
     dataFile: path.join(cwd, 'data', 'tasks.runtime.json'),
+    databaseClient: 'sqlite',
+    sqliteFile: path.join(cwd, 'data', 'tasks.sqlite'),
+    databaseHost: 'localhost',
+    databasePort: 5432,
+    databaseName: 'config_lab_app',
+    databaseUser: 'config_lab_app',
+    databasePassword: '',
+    databaseSsl: false,
     externalServiceUrl: 'https://api.example.local',
     apiToken: '',
     logLevel: 'info',
@@ -72,6 +80,16 @@ function getNumberValue(options) {
   return value;
 }
 
+function getBooleanValue(options) {
+  const value = getValue(options);
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
+}
+
 function resolveConfigPath(value, cwd) {
   return path.isAbsolute(value) ? value : path.join(cwd, value);
 }
@@ -99,6 +117,13 @@ function loadConfig(options = {}) {
     envName: 'DATA_FILE',
     yamlPath: ['storage', 'dataFile'],
     defaultValue: defaults.dataFile,
+  });
+  const sqliteFile = getValue({
+    env,
+    yamlValues: yamlConfig.values,
+    envName: 'SQLITE_FILE',
+    yamlPath: ['database', 'sqliteFile'],
+    defaultValue: defaults.sqliteFile,
   });
 
   const config = {
@@ -131,6 +156,60 @@ function loadConfig(options = {}) {
       defaultValue: defaults.port,
     }),
     dataFile: resolveConfigPath(dataFile, cwd),
+    database: {
+      client: getValue({
+        env,
+        yamlValues: yamlConfig.values,
+        envName: 'DB_CLIENT',
+        yamlPath: ['database', 'client'],
+        defaultValue: defaults.databaseClient,
+      }),
+      sqliteFile: resolveConfigPath(sqliteFile, cwd),
+      postgres: {
+        host: getValue({
+          env,
+          yamlValues: yamlConfig.values,
+          envName: 'DATABASE_HOST',
+          yamlPath: ['database', 'postgres', 'host'],
+          defaultValue: defaults.databaseHost,
+        }),
+        port: getNumberValue({
+          env,
+          yamlValues: yamlConfig.values,
+          envName: 'DATABASE_PORT',
+          yamlPath: ['database', 'postgres', 'port'],
+          defaultValue: defaults.databasePort,
+        }),
+        database: getValue({
+          env,
+          yamlValues: yamlConfig.values,
+          envName: 'DATABASE_NAME',
+          yamlPath: ['database', 'postgres', 'name'],
+          defaultValue: defaults.databaseName,
+        }),
+        user: getValue({
+          env,
+          yamlValues: yamlConfig.values,
+          envName: 'DATABASE_USER',
+          yamlPath: ['database', 'postgres', 'user'],
+          defaultValue: defaults.databaseUser,
+        }),
+        password: getValue({
+          env,
+          yamlValues: yamlConfig.values,
+          envName: 'DATABASE_PASSWORD',
+          yamlPath: ['database', 'postgres', 'password'],
+          defaultValue: defaults.databasePassword,
+        }),
+        ssl: getBooleanValue({
+          env,
+          yamlValues: yamlConfig.values,
+          envName: 'DATABASE_SSL',
+          yamlPath: ['database', 'postgres', 'ssl'],
+          defaultValue: defaults.databaseSsl,
+        }),
+      },
+    },
     externalServiceUrl: getValue({
       env,
       yamlValues: yamlConfig.values,
@@ -161,6 +240,12 @@ function loadConfig(options = {}) {
     'defaults',
   ].filter(Boolean);
 
+  config.database.client = String(config.database.client).toLowerCase();
+
+  if (!['sqlite', 'postgres'].includes(config.database.client)) {
+    throw new Error('DB_CLIENT must be either sqlite or postgres.');
+  }
+
   return config;
 }
 
@@ -171,6 +256,10 @@ function toPublicConfig(config) {
     host: config.host,
     port: config.port,
     dataFile: config.dataFile,
+    databaseClient: config.database.client,
+    sqliteFile: config.database.client === 'sqlite' ? config.database.sqliteFile : null,
+    postgresHost: config.database.client === 'postgres' ? config.database.postgres.host : null,
+    postgresDatabase: config.database.client === 'postgres' ? config.database.postgres.database : null,
     externalServiceUrl: config.externalServiceUrl,
     apiTokenConfigured: Boolean(config.apiToken),
     logLevel: config.logLevel,

@@ -9,6 +9,17 @@ server:
 storage:
   dataFile: data/tasks.runtime.json
 
+database:
+  client: sqlite
+  sqliteFile: data/tasks.sqlite
+  postgres:
+    host: localhost
+    port: 5432
+    name: config_lab_app
+    user: config_lab_app
+    password: replace-with-database-password
+    ssl: false
+
 externalService:
   url: https://api.example.local
   apiToken: replace-with-local-token

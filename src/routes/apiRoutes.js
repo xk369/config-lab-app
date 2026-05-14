@@ -25,6 +25,15 @@ function createApiRouter({ taskService, config }) {
     }
   });
 
+  router.post('/tasks', async (request, response, next) => {
+    try {
+      const task = await taskService.createTask(request.body);
+      response.status(201).json(task);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/summary', async (request, response, next) => {
     try {
       const summary = await taskService.getSummary();

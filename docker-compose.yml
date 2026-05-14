@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: config_lab_app
+      POSTGRES_USER: config_lab_app
+      POSTGRES_PASSWORD: dev_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U config_lab_app -d config_lab_app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    image: config-lab-app:1.2
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_NAME: Config Lab App Compose
+      APP_ENV: compose
+      HOST: 0.0.0.0
+      PORT: 8080
+      DB_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: config_lab_app
+      DATABASE_USER: config_lab_app
+      DATABASE_PASSWORD: dev_password
+      DATABASE_SSL: false
+      EXTERNAL_SERVICE_URL: https://compose.example/api
+      LOG_LEVEL: info
+    ports:
+      - "8080"
+
+volumes:
+  postgres-data:

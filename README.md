@@ -34,6 +34,14 @@ cp config/local.example.yaml config/local.yaml
 - `DATA_FILE` - путь к JSON-файлу с данными.
 - `APP_NAME` - название приложения.
 - `CONFIG_FILE` - путь к YAML-файлу конфигурации.
+- `DB_CLIENT` - тип хранилища состояния: `sqlite` или `postgres`.
+- `SQLITE_FILE` - путь к локальной SQLite-БД для запуска без Docker.
+- `DATABASE_HOST` - хост PostgreSQL.
+- `DATABASE_PORT` - порт PostgreSQL.
+- `DATABASE_NAME` - имя базы данных PostgreSQL.
+- `DATABASE_USER` - пользователь PostgreSQL.
+- `DATABASE_PASSWORD` - пароль PostgreSQL.
+- `DATABASE_SSL` - включение SSL для PostgreSQL.
 - `EXTERNAL_SERVICE_URL` - адрес внешнего API.
 - `API_TOKEN` - секретный токен внешнего API.
 - `LOG_LEVEL` - уровень логирования.
@@ -69,4 +77,27 @@ docker run --rm -p 7100:7100 \
   -e APP_NAME="Config Lab App Prod" \
   -e EXTERNAL_SERVICE_URL=https://prod.example/api \
   config-lab-app:1.0
+```
+
+## Внешняя база данных
+
+Локально приложение по умолчанию использует SQLite:
+
+```bash
+DB_CLIENT=sqlite SQLITE_FILE=data/tasks.sqlite npm start
+```
+
+В Docker Compose состояние хранится во внешнем сервисе PostgreSQL:
+
+```bash
+docker compose up --build --scale app=3 -d
+docker compose ps
+```
+
+Создание записи через API:
+
+```bash
+curl -X POST http://localhost:<published-port>/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Запись хранится во внешней PostgreSQL","status":"done"}'
 ```

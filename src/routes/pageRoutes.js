@@ -78,6 +78,14 @@ function renderHomePage({ config, tasks, summary }) {
               <span>YAML config</span>
               <strong>${config.configFile ? 'loaded' : 'not used'}</strong>
             </article>
+            <article>
+              <span>База данных</span>
+              <strong>${config.database.client}</strong>
+            </article>
+            <article>
+              <span>DB host</span>
+              <strong>${config.database.client === 'postgres' ? config.database.postgres.host : 'local sqlite'}</strong>
+            </article>
           </section>
 
           <section class="panel">

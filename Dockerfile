@@ -8,6 +8,8 @@ ENV APP_ENV=container
 ENV HOST=0.0.0.0
 ENV PORT=8080
 ENV DATA_FILE=/app/data/tasks.runtime.json
+ENV DB_CLIENT=sqlite
+ENV SQLITE_FILE=/app/data/tasks.sqlite
 ENV EXTERNAL_SERVICE_URL=https://api.example.local
 ENV LOG_LEVEL=info
 

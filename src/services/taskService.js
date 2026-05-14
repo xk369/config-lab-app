@@ -21,6 +21,22 @@ class TaskService {
       remaining: tasks.length - completedCount,
     };
   }
+
+  async createTask(task) {
+    const title = typeof task.title === 'string' ? task.title.trim() : '';
+    const status = task.status === 'done' ? 'done' : 'planned';
+
+    if (!title) {
+      throw new Error('Task title is required.');
+    }
+
+    const createdTask = await this.taskRepository.create({ title, status });
+
+    return {
+      ...createdTask,
+      isCompleted: createdTask.status === 'done',
+    };
+  }
 }
 
 module.exports = TaskService;
