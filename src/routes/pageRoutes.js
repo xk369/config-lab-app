@@ -41,7 +41,8 @@ function renderHomePage({ config, tasks, summary }) {
             <p>
               Приложение отделяет код от конфигурации: окружение, порт и файл
               данных задаются через переменные окружения, а не через локальные
-              пути внутри исходного кода.
+              пути внутри исходного кода. YAML-файл можно использовать для
+              локальной разработки, а переменные окружения имеют приоритет.
             </p>
           </section>
 
@@ -57,6 +58,25 @@ function renderHomePage({ config, tasks, summary }) {
             <article>
               <span>Выполнено</span>
               <strong>${summary.completed}</strong>
+            </article>
+          </section>
+
+          <section class="config-grid">
+            <article>
+              <span>Порт</span>
+              <strong>${config.port}</strong>
+            </article>
+            <article>
+              <span>Внешний API</span>
+              <strong>${config.externalServiceUrl}</strong>
+            </article>
+            <article>
+              <span>API token</span>
+              <strong>${config.apiToken ? 'configured' : 'not set'}</strong>
+            </article>
+            <article>
+              <span>YAML config</span>
+              <strong>${config.configFile ? 'loaded' : 'not used'}</strong>
             </article>
           </section>
 

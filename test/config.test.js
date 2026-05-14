@@ -1,14 +1,70 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
 test('configuration reads runtime values from environment-friendly defaults', () => {
-  const config = require('../src/config');
+  const { loadConfig } = require('../src/config');
+  const config = loadConfig({
+    env: {},
+    cwd: path.join(__dirname, '..'),
+    loadEnvFile: false,
+  });
 
   assert.equal(config.host, '0.0.0.0');
   assert.equal(config.port, 3001);
   assert.equal(path.isAbsolute(config.dataFile), true);
+});
+
+test('environment variables override yaml configuration file', () => {
+  const { loadConfig, toPublicConfig } = require('../src/config');
+  const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'config-lab-app-'));
+  const configFile = path.join(tempDirectory, 'local.yaml');
+
+  fs.writeFileSync(
+    configFile,
+    [
+      'app:',
+      '  name: YAML Config App',
+      '  env: yaml-local',
+      'server:',
+      '  host: 127.0.0.1',
+      '  port: 4100',
+      'storage:',
+      '  dataFile: data/from-yaml.json',
+      'externalService:',
+      '  url: https://yaml.example/api',
+      '  apiToken: yaml-secret',
+      'logging:',
+      '  level: debug',
+      '',
+    ].join('\n')
+  );
+
+  const config = loadConfig({
+    cwd: tempDirectory,
+    loadEnvFile: false,
+    env: {
+      CONFIG_FILE: configFile,
+      APP_ENV: 'env-staging',
+      PORT: '5050',
+      EXTERNAL_SERVICE_URL: 'https://env.example/api',
+      API_TOKEN: 'env-secret',
+    },
+  });
+
+  assert.equal(config.appName, 'YAML Config App');
+  assert.equal(config.host, '127.0.0.1');
+  assert.equal(config.env, 'env-staging');
+  assert.equal(config.port, 5050);
+  assert.equal(config.externalServiceUrl, 'https://env.example/api');
+  assert.equal(config.apiToken, 'env-secret');
+  assert.equal(config.logLevel, 'debug');
+
+  const publicConfig = toPublicConfig(config);
+  assert.equal(publicConfig.apiTokenConfigured, true);
+  assert.equal(Object.prototype.hasOwnProperty.call(publicConfig, 'apiToken'), false);
 });
 
 test('source files do not contain hardcoded local user paths', () => {

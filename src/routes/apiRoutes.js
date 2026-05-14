@@ -1,4 +1,5 @@
 const express = require('express');
+const { toPublicConfig } = require('../config');
 
 function createApiRouter({ taskService, config }) {
   const router = express.Router();
@@ -9,6 +10,10 @@ function createApiRouter({ taskService, config }) {
       app: config.appName,
       env: config.env,
     });
+  });
+
+  router.get('/config', (request, response) => {
+    response.json(toPublicConfig(config));
   });
 
   router.get('/tasks', async (request, response, next) => {

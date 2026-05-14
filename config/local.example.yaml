@@ -1,0 +1,17 @@
+app:
+  name: Config Lab App Local
+  env: local-yaml
+
+server:
+  host: 0.0.0.0
+  port: 3001
+
+storage:
+  dataFile: data/tasks.runtime.json
+
+externalService:
+  url: https://api.example.local
+  apiToken: replace-with-local-token
+
+logging:
+  level: debug

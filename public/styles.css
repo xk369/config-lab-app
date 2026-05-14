@@ -63,7 +63,15 @@ h1 {
   margin-bottom: 18px;
 }
 
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
 .grid article,
+.config-grid article,
 .panel {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -75,7 +83,12 @@ h1 {
   padding: 18px;
 }
 
-.grid span {
+.config-grid article {
+  padding: 16px;
+}
+
+.grid span,
+.config-grid span {
   display: block;
   margin-bottom: 8px;
   color: var(--muted);
@@ -83,6 +96,11 @@ h1 {
 
 .grid strong {
   font-size: 28px;
+}
+
+.config-grid strong {
+  overflow-wrap: anywhere;
+  font-size: 17px;
 }
 
 .panel {
@@ -121,7 +139,8 @@ ul {
 }
 
 @media (max-width: 700px) {
-  .grid {
+  .grid,
+  .config-grid {
     grid-template-columns: 1fr;
   }
 

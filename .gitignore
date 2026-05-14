@@ -1,6 +1,7 @@
 node_modules/
 npm-debug.log*
 .env
+config/local.yaml
 .DS_Store
 coverage/
 reports/screenshots/
