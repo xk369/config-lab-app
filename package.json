@@ -1,0 +1,17 @@
+{
+  "name": "config-lab-app",
+  "version": "1.0.0",
+  "description": "Simple modular web application for repository and containerization labs.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "APP_ENV=development node src/server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
