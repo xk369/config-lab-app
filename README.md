@@ -25,3 +25,10 @@ PORT=3001 npm start
 - `src/services/taskService.js` - бизнес-логика.
 - `src/routes` - HTTP-маршруты.
 - `src/server.js` - точка запуска приложения.
+
+## Docker
+
+```bash
+docker build -t config-lab-app:1.0 .
+docker run --rm -p 8080:8080 config-lab-app:1.0
+```

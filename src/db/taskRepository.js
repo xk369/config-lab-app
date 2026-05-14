@@ -15,7 +15,7 @@ const initialTasks = [
   {
     id: 3,
     title: 'Подготовить Dockerfile для повторяемого запуска',
-    status: 'planned',
+    status: 'done',
   },
 ];
 
