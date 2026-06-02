@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const dotenv = require('dotenv');
 const yaml = require('js-yaml');
@@ -9,7 +10,10 @@ function createDefaults(cwd) {
     env: 'development',
     host: '0.0.0.0',
     port: 3001,
+    shutdownTimeoutMs: 10000,
+    shutdownDrainMs: 500,
     dataFile: path.join(cwd, 'data', 'tasks.runtime.json'),
+    autoMigrate: true,
     databaseClient: 'sqlite',
     sqliteFile: path.join(cwd, 'data', 'tasks.sqlite'),
     databaseHost: 'localhost',
@@ -20,6 +24,10 @@ function createDefaults(cwd) {
     databaseSsl: false,
     externalServiceUrl: 'https://api.example.local',
     apiToken: '',
+    sessionStore: 'memory',
+    redisUrl: 'redis://localhost:6379',
+    releaseVersion: 'local-dev',
+    instanceId: os.hostname(),
     logLevel: 'info',
   };
 }
@@ -155,8 +163,29 @@ function loadConfig(options = {}) {
       yamlPath: ['server', 'port'],
       defaultValue: defaults.port,
     }),
+    shutdownTimeoutMs: getNumberValue({
+      env,
+      yamlValues: yamlConfig.values,
+      envName: 'SHUTDOWN_TIMEOUT_MS',
+      yamlPath: ['server', 'shutdownTimeoutMs'],
+      defaultValue: defaults.shutdownTimeoutMs,
+    }),
+    shutdownDrainMs: getNumberValue({
+      env,
+      yamlValues: yamlConfig.values,
+      envName: 'SHUTDOWN_DRAIN_MS',
+      yamlPath: ['server', 'shutdownDrainMs'],
+      defaultValue: defaults.shutdownDrainMs,
+    }),
     dataFile: resolveConfigPath(dataFile, cwd),
     database: {
+      autoMigrate: getBooleanValue({
+        env,
+        yamlValues: yamlConfig.values,
+        envName: 'AUTO_MIGRATE',
+        yamlPath: ['database', 'autoMigrate'],
+        defaultValue: defaults.autoMigrate,
+      }),
       client: getValue({
         env,
         yamlValues: yamlConfig.values,
@@ -210,6 +239,22 @@ function loadConfig(options = {}) {
         }),
       },
     },
+    sessions: {
+      store: getValue({
+        env,
+        yamlValues: yamlConfig.values,
+        envName: 'SESSION_STORE',
+        yamlPath: ['sessions', 'store'],
+        defaultValue: defaults.sessionStore,
+      }),
+      redisUrl: getValue({
+        env,
+        yamlValues: yamlConfig.values,
+        envName: 'REDIS_URL',
+        yamlPath: ['sessions', 'redisUrl'],
+        defaultValue: defaults.redisUrl,
+      }),
+    },
     externalServiceUrl: getValue({
       env,
       yamlValues: yamlConfig.values,
@@ -223,6 +268,20 @@ function loadConfig(options = {}) {
       envName: 'API_TOKEN',
       yamlPath: ['externalService', 'apiToken'],
       defaultValue: defaults.apiToken,
+    }),
+    releaseVersion: getValue({
+      env,
+      yamlValues: yamlConfig.values,
+      envName: 'RELEASE_VERSION',
+      yamlPath: ['app', 'releaseVersion'],
+      defaultValue: env.IMAGE_TAG || env.GITHUB_SHA || defaults.releaseVersion,
+    }),
+    instanceId: getValue({
+      env,
+      yamlValues: yamlConfig.values,
+      envName: 'INSTANCE_ID',
+      yamlPath: ['runtime', 'instanceId'],
+      defaultValue: defaults.instanceId,
     }),
     logLevel: getValue({
       env,
@@ -241,9 +300,14 @@ function loadConfig(options = {}) {
   ].filter(Boolean);
 
   config.database.client = String(config.database.client).toLowerCase();
+  config.sessions.store = String(config.sessions.store).toLowerCase();
 
   if (!['sqlite', 'postgres'].includes(config.database.client)) {
     throw new Error('DB_CLIENT must be either sqlite or postgres.');
+  }
+
+  if (!['memory', 'redis'].includes(config.sessions.store)) {
+    throw new Error('SESSION_STORE must be either memory or redis.');
   }
 
   return config;
@@ -255,13 +319,20 @@ function toPublicConfig(config) {
     env: config.env,
     host: config.host,
     port: config.port,
+    shutdownTimeoutMs: config.shutdownTimeoutMs,
+    shutdownDrainMs: config.shutdownDrainMs,
     dataFile: config.dataFile,
+    autoMigrate: config.database.autoMigrate,
     databaseClient: config.database.client,
     sqliteFile: config.database.client === 'sqlite' ? config.database.sqliteFile : null,
     postgresHost: config.database.client === 'postgres' ? config.database.postgres.host : null,
     postgresDatabase: config.database.client === 'postgres' ? config.database.postgres.database : null,
+    sessionStore: config.sessions.store,
+    redisConfigured: config.sessions.store === 'redis',
     externalServiceUrl: config.externalServiceUrl,
     apiTokenConfigured: Boolean(config.apiToken),
+    releaseVersion: config.releaseVersion,
+    instanceId: config.instanceId,
     logLevel: config.logLevel,
     configFile: config.configFile,
     sources: config.sources,

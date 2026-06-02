@@ -13,17 +13,30 @@ services:
       timeout: 3s
       retries: 10
 
-  app:
-    build: .
-    image: config-lab-app:1.2
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      args:
+        VCS_REF: local-compose
+        BUILD_DATE: local-compose
+    image: config-lab-app:1.5
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       APP_NAME: Config Lab App Compose
       APP_ENV: compose
-      HOST: 0.0.0.0
-      PORT: 8080
       DB_CLIENT: postgres
       DATABASE_HOST: postgres
       DATABASE_PORT: 5432
@@ -31,10 +44,57 @@ services:
       DATABASE_USER: config_lab_app
       DATABASE_PASSWORD: dev_password
       DATABASE_SSL: false
-      EXTERNAL_SERVICE_URL: https://compose.example/api
+      RELEASE_VERSION: compose-local
       LOG_LEVEL: info
-    ports:
+    command: ["node", "src/cli.js", "migrate"]
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      args:
+        VCS_REF: local-compose
+        BUILD_DATE: local-compose
+    image: config-lab-app:1.5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      APP_NAME: Config Lab App Compose
+      APP_ENV: compose
+      HOST: 0.0.0.0
+      PORT: 8080
+      AUTO_MIGRATE: false
+      DB_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: config_lab_app
+      DATABASE_USER: config_lab_app
+      DATABASE_PASSWORD: dev_password
+      DATABASE_SSL: false
+      SESSION_STORE: redis
+      REDIS_URL: redis://redis:6379
+      EXTERNAL_SERVICE_URL: https://compose.example/api
+      RELEASE_VERSION: compose-local
+      SHUTDOWN_TIMEOUT_MS: 10000
+      SHUTDOWN_DRAIN_MS: 500
+      LOG_LEVEL: info
+    expose:
       - "8080"
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
 
 volumes:
   postgres-data:
+  redis-data:

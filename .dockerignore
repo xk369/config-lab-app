@@ -1,9 +1,11 @@
 node_modules
 npm-debug.log*
 .git
+.github
 .gitignore
 .env
 .DS_Store
 coverage
 data
 reports
+docs

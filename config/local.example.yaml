@@ -1,15 +1,19 @@
 app:
   name: Config Lab App Local
   env: local-yaml
+  releaseVersion: local-yaml
 
 server:
   host: 0.0.0.0
   port: 3001
+  shutdownTimeoutMs: 10000
+  shutdownDrainMs: 500
 
 storage:
   dataFile: data/tasks.runtime.json
 
 database:
+  autoMigrate: true
   client: sqlite
   sqliteFile: data/tasks.sqlite
   postgres:
@@ -19,6 +23,10 @@ database:
     user: config_lab_app
     password: replace-with-database-password
     ssl: false
+
+sessions:
+  store: memory
+  redisUrl: redis://localhost:6379
 
 externalService:
   url: https://api.example.local

@@ -1,7 +1,7 @@
 const fs = require('node:fs/promises');
-const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const { Pool } = require('pg');
+const { runMigrations } = require('./migrations');
 
 const initialTasks = [
   {
@@ -19,7 +19,11 @@ const initialTasks = [
 ];
 
 class TaskRepository {
-  static async create(config) {
+  static async create(config, options = {}) {
+    if (config.database.autoMigrate) {
+      await runMigrations(config, options.logger);
+    }
+
     const repository = config.database.client === 'postgres'
       ? new PostgresTaskRepository(config.database.postgres)
       : new SqliteTaskRepository(config.database.sqliteFile);
@@ -36,16 +40,8 @@ class SqliteTaskRepository {
   }
 
   async init() {
-    await fs.mkdir(path.dirname(this.sqliteFile), { recursive: true });
+    await fs.access(this.sqliteFile);
     this.database = new DatabaseSync(this.sqliteFile);
-    this.database.exec(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        status TEXT NOT NULL CHECK (status IN ('done', 'planned')),
-        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
     this.seedIfEmpty();
   }
 
@@ -98,14 +94,6 @@ class PostgresTaskRepository {
   }
 
   async init() {
-    await this.pool.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id SERIAL PRIMARY KEY,
-        title TEXT NOT NULL,
-        status TEXT NOT NULL CHECK (status IN ('done', 'planned')),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `);
     await this.seedIfEmpty();
   }
 

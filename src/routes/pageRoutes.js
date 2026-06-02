@@ -39,10 +39,9 @@ function renderHomePage({ config, tasks, summary }) {
             <p class="eyebrow">12-factor practice</p>
             <h1>${config.appName}</h1>
             <p>
-              Приложение отделяет код от конфигурации: окружение, порт и файл
-              данных задаются через переменные окружения, а не через локальные
-              пути внутри исходного кода. YAML-файл можно использовать для
-              локальной разработки, а переменные окружения имеют приоритет.
+              Приложение отделяет код от конфигурации, запускается из одного
+              Docker-образа в разных окружениях, хранит состояние во внешней
+              базе данных и пишет структурные JSON-логи в stdout/stderr.
             </p>
           </section>
 
@@ -58,6 +57,10 @@ function renderHomePage({ config, tasks, summary }) {
             <article>
               <span>Выполнено</span>
               <strong>${summary.completed}</strong>
+            </article>
+            <article>
+              <span>Экземпляр</span>
+              <strong>${config.instanceId}</strong>
             </article>
           </section>
 
@@ -85,6 +88,14 @@ function renderHomePage({ config, tasks, summary }) {
             <article>
               <span>DB host</span>
               <strong>${config.database.client === 'postgres' ? config.database.postgres.host : 'local sqlite'}</strong>
+            </article>
+            <article>
+              <span>Сессии</span>
+              <strong>${config.sessions.store}</strong>
+            </article>
+            <article>
+              <span>Релиз</span>
+              <strong>${config.releaseVersion}</strong>
             </article>
           </section>
 

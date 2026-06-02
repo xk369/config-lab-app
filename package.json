@@ -2,11 +2,15 @@
   "name": "config-lab-app",
   "version": "1.0.0",
   "description": "Simple modular web application for repository and containerization labs.",
-  "main": "src/server.js",
+  "main": "src/cli.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "APP_ENV=development node src/server.js",
-    "test": "node --test"
+    "start": "node src/cli.js server",
+    "dev": "APP_ENV=development node src/cli.js server",
+    "migrate": "node src/cli.js migrate",
+    "create-admin": "node src/cli.js create-admin",
+    "clear-cache": "node src/cli.js clear-cache",
+    "load-test": "node scripts/load-test.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
